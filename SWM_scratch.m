@@ -30,9 +30,10 @@ response_y = group_data(:,7);
 target_x = 10*cosd(group_data(:,13)); % x location
 target_y = 10*sind(group_data(:,13)); % y location
 
-% delete lapses and nans
-idx = find(sign(response_x) ~= sign(target_x));
-idx = unique([idx; find(sign(response_y) ~= sign(target_y))]);
+% % delete nans (and potentially also trials where targt and response are not in same quadrant)
+% idx = find(sign(response_x) ~= sign(target_x));
+% idx = unique([idx; find(sign(response_y) ~= sign(target_y))]);
+idx = find(isnan(response_x) | isnan(response_y) | isnan(target_x) | isnan(target_y)  );
 response_x(idx) = [];
 response_y(idx) = [];
 target_x(idx) = [];
@@ -42,10 +43,12 @@ data_subj(idx) = [];
 data_discsize(idx) = [];
 
 % % project everything onto first quadrant
-% response_x = abs(response_x);
-% response_y = abs(response_y);
-% target_x = abs(target_x);
-% target_y = abs(target_y);
+% sign_x = sign(target_x);
+% sign_y = sign(target_y);
+% response_x = response_x.*sign_x;
+% response_y = response_y.*sign_y;
+% target_x = target_x.*sign_x;
+% target_y = target_y.*sign_y;
 
 % priority and subject numbers
 priorityVec = unique(data_priority); % priority condition
@@ -163,28 +166,28 @@ if (aveplot)
     subplot(2,2,1);
     mean_bias_rho = mean(biasVec_rho);
     sem_bias_rho = std(biasVec_rho)/sqrt(size(biasVec_rho,1));
-    errorbar(mean_bias_rho,sem_bias_rho)
+    errorbar(mean_bias_rho,sem_bias_rho,'k')
     set(gca,'XTick',[1 2 3],'XTickLabel',[0.1 0.3 0.6])
     xlabel('priority'); title('bias rho'); defaultplot;
     
     subplot(2,2,2);
     mean_bias_theta = mean(biasVec_theta);
     sem_bias_theta = std(biasVec_theta)/sqrt(size(biasVec_theta,1));
-    errorbar(mean_bias_theta,sem_bias_theta)
+    errorbar(mean_bias_theta,sem_bias_theta,'k')
     set(gca,'XTick',[1 2 3],'XTickLabel',[0.1 0.3 0.6])
     xlabel('priority'); title('bias theta'); defaultplot;
     
     subplot(2,2,3);
     mean_var_rho = mean(varVec_rho);
     sem_var_rho = std(varVec_rho)/sqrt(size(varVec_rho,1));
-    errorbar(mean_var_rho,sem_var_rho)
+    errorbar(mean_var_rho,sem_var_rho,'k')
     set(gca,'XTick',[1 2 3],'XTickLabel',[0.1 0.3 0.6])
     xlabel('priority'); title('variance rho'); defaultplot;
     
     subplot(2,2,4);
     mean_var_theta = mean(varVec_theta);
     sem_var_theta = std(varVec_theta)/sqrt(size(varVec_theta,1));
-    errorbar(mean_var_theta,sem_var_theta)
+    errorbar(mean_var_theta,sem_var_theta,'k')
     set(gca,'XTick',[1 2 3],'XTickLabel',[0.1 0.3 0.6])
     xlabel('priority'); title('variance theta'); defaultplot;
 end
@@ -192,6 +195,51 @@ end
 %% scatterplot of disc size vs error (euclidean or circular tangential)
 
 plot(data_discsize,error_euclid,'.')
+
+%% plot of variances for different priorities (with cov matrix)
+
+% project everything onto first quadrant (may or may not have already done
+% this)
+sign_x = sign(target_x);
+sign_y = sign(target_y);
+response_x = response_x.*sign_x;
+response_y = response_y.*sign_y;
+target_x = target_x.*sign_x;
+target_y = target_y.*sign_y;
+
+% changing to polar coordinates
+[target_theta, target_rho] = cart2pol(target_x,target_y);
+[response_theta, response_rho] = cart2pol(response_x,response_y);
+
+% collapse them all onto the same spot
+error_x = response_x - target_x;
+error_y = response_y - target_y;
+
+colorVec = {'r','b','k'};
+figure; 
+for ipriority = 1:nPriorities
+    priority = priorityVec(ipriority);
+    idx = (data_priority == priority); % indices of trials for current priority
+    
+    % plot target and responses
+    subplot(2,2,ipriority); hold on
+    plot(error_x(idx),error_y(idx),'.','Color',[0.7 0.7 0.7]) % errors
+    plot(0,0,'k.','MarkerSize',14) % target
+    title(num2str(priority))
+    defaultplot
+    
+    % plot covariance matrix
+    covMat = cov([error_x(idx) error_y(idx)]);
+    circle = bsxfun(@plus,mean([error_x(idx) error_y(idx)]),[cos(linspace(0,2*pi,50))' sin(linspace(0,2*pi,50))']*covMat);
+    plot(circle(:,1),circle(:,2),colorVec{ipriority}); % plot covariance circle
+    
+    % plot just covariance matrices on top of one another
+    subplot(2,2,4); hold on
+    plot(circle(:,1),circle(:,2),colorVec{ipriority}); % plot covariance circle
+    axis([-10 10 -20 20])
+    defaultplot
+end
+
 
 %% plotting quantile bins of error with discsize
 
