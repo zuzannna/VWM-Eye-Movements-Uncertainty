@@ -112,6 +112,47 @@ for isubj = 1:nSubj
 end
 
 
+%% main effects of error and disc size from priority
+
+discsizeMat = nan(nSubj,nPriorities);
+euclideanerrorMat = discsizeMat;
+rhoerrorMat = discsizeMat; thetaerrorMat = discsizeMat;
+for isubj = 1:nSubj;
+    subjnum = subjVec(isubj);
+    
+    for ipriority = 1:nPriorities;
+        priority = priorityVec(ipriority);
+        
+        idx = (data_subj == subjnum) & (data_priority == priority); % indices of trials for current subject
+        
+        % mean euclidean error
+        euclideanerrorMat(isubj,ipriority) = mean(error_euclid(idx));
+        
+        % mean other errors
+        rhoerrorMat(isubj,ipriority) = mean(error_rho(idx));
+        thetaerrorMat(isubj,ipriority) = mean(error_theta(idx));
+        
+        % mean disc size
+        discsizeMat(isubj,ipriority) = mean(data_discsize(idx));
+    end
+    
+end
+
+
+figure;
+meaneucliderror = mean(euclideanerrorMat);
+semeucliderror = std(euclideanerrorMat)/sqrt(nSubj);
+errorbar(meaneucliderror,semeucliderror,'k')
+set(gca,'XTick',[1 2 3],'XTickLabel',[0.1 0.3 0.6])
+xlabel('priority'); title('euclidean error'); defaultplot;
+
+figure;
+meandiscsize = mean(discsizeMat);
+semdiscsize = std(discsizeMat)/sqrt(nSubj);
+errorbar(meandiscsize,semdiscsize,'k')
+set(gca,'XTick',[1 2 3],'XTickLabel',[0.1 0.3 0.6])
+xlabel('priority'); title('discsize'); defaultplot;
+
 %% plotting bias as a function of priority across or within each subject
 
 aveplot = 1;
