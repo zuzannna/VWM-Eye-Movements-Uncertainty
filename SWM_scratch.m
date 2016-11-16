@@ -322,10 +322,44 @@ for ipriority = 1:nPriorities
     defaultplot
 end
 
+%% calculate correlation coefficient between euclidean error and discsize
+
+standardized_discsize = nan(size(data_discsize));
+standardized_error = nan(size(error_euclid));
+for isubj = 1:nSubj
+    subjnum = subjVec(isubj);
+    
+    idx = data_subj == subjnum;
+    
+    discsize = data_discsize(idx);
+    euclideanerror = error_euclid(idx);
+    
+    % standardize them
+    discsize = (discsize - mean(discsize))./std(discsize);
+    euclideanerror = (euclideanerror - mean(euclideanerror))./std(euclideanerror);
+    
+    % put them back
+    standardized_error(idx) = euclideanerror;
+    standardized_discsize(idx) = discsize;    
+end
+
+% overall coreelation
+[r,p] = corrcoef(standardized_error,standardized_discsize)
+
+rVec = nan(1,nPriorities); pVec = rVec;
+for ipriority = 1:nPriorities;
+    priority = priorityVec(ipriority);
+    idx = data_priority == priority;
+    
+    [r,p] = corrcoef(standardized_error(idx),standardized_discsize(idx));
+    rVec(ipriority) = r(2);
+    pVec(ipriority) = p(2);
+end
+
 
 %% plotting quantile bins of error with discsize
 
-nQuantiles = 4;
+nQuantiles = 5;
 meandiscsizeVec = nan(nSubj,nPriorities,nQuantiles);
 meaneuclideanerrorVec = meandiscsizeVec; 
 meanangularerrorVec = meandiscsizeVec;
@@ -333,15 +367,27 @@ meanangularerrorVec = meandiscsizeVec;
 for isubj = 1:nSubj
     subjnum = subjVec(isubj);
     
+    idx = (data_subj == subjnum);
+    
+    % get the relevant informtion for current subject and priority
+    Discsize = data_discsize(idx);
+    Euclideanerror = error_euclid(idx);
+    Angularerror = error_theta(idx);
+    PriorityVec = data_priority(idx);
+    
+    % standardizing discsize data
+    Discsize = (Discsize - mean(Discsize))./std(Discsize);
+    Euclideanerror = (Euclideanerror - mean(Euclideanerror))./std(Euclideanerror);
+    
     for ipriority = 1:nPriorities
         priority = priorityVec(ipriority);
         
-        idx = (data_subj == subjnum) & (data_priority == priority); % correct subject number and priority
+        idxx = (PriorityVec == priority); % correct subject number and priority
         
         % get the relevant informtion for current subject and priority
-        discsize = data_discsize(idx);
-        euclideanerror = error_euclid(idx);
-        angularerror = error_theta(idx);
+        discsize = Discsize(idxx);
+        euclideanerror = Euclideanerror(idxx);
+        angularerror = Angularerror(idxx);
         
         % sort by increasing discsize
         [discsize, I] = sort(discsize);
@@ -370,21 +416,21 @@ sem_euclideanerror = squeeze(std(meaneuclideanerrorVec))/sqrt(nSubj);
 sem_angularerror = squeeze(std(meanangularerrorVec))/sqrt(nSubj);
 
 % plot euclidean error
-colorVec = {'r','b','k'};
+colorVec = {'k','b','r'};
 figure; hold on;
 for ipriority = 1:nPriorities;
-    errorbar(mean_euclideanerror(ipriority,:),sem_euclideanerror(ipriority,:),colorVec{ipriority});
+    errorbar(mean_discsize(ipriority,:),mean_euclideanerror(ipriority,:),sem_euclideanerror(ipriority,:),colorVec{ipriority});
 end
 defaultplot;
 ylabel('euclidean error')
 xlabel('disc size quantile')
 
 
-% plot
-figure; hold on;
-for ipriority = 1:nPriorities;
-    errorbar(mean_angularerror(ipriority,:),sem_angularerror(ipriority,:),colorVec{ipriority});
-end
-defaultplot;
-ylabel('angular error')
-xlabel('disc size quantile')
+% % plot
+% figure; hold on;
+% for ipriority = 1:nPriorities;
+%     errorbar(mean_angularerror(ipriority,:),sem_angularerror(ipriority,:),colorVec{ipriority});
+% end
+% defaultplot;
+% ylabel('angular error')
+% xlabel('disc size quantile')
