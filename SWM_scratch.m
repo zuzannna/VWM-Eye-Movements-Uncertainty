@@ -30,10 +30,26 @@ response_y = group_data(:,7);
 target_x = 10*cosd(group_data(:,13)); % x location
 target_y = 10*sind(group_data(:,13)); % y location
 
-% % delete nans (and potentially also trials where targt and response are not in same quadrant)
-% idx = find(sign(response_x) ~= sign(target_x));
-% idx = unique([idx; find(sign(response_y) ~= sign(target_y))]);
-idx = find(isnan(response_x) | isnan(response_y) | isnan(target_x) | isnan(target_y)  );
+% 
+idx = find(isnan(response_x) | isnan(response_y) | isnan(target_x) | isnan(target_y)  ); % delete nans 
+response_x(idx) = [];
+response_y(idx) = [];
+target_x(idx) = [];
+target_y(idx) = [];
+data_priority(idx) = [];
+data_subj(idx) = [];
+data_discsize(idx) = [];
+
+% errors
+error_x = response_x - target_x;
+error_y = response_y - target_y;
+error_euclid = sqrt(error_x.^2 + error_y.^2);
+
+idx = error_euclid > 13;
+idx = idx | (data_discsize > 13); % delete stuff with disc size > 13
+error_x(idx) = [];
+error_y(idx) = [];
+error_euclid(idx) = [];
 response_x(idx) = [];
 response_y(idx) = [];
 target_x(idx) = [];
@@ -62,9 +78,6 @@ nSubj = length(subjVec);
 [response_theta, response_rho] = cart2pol(response_x,response_y);
 
 % errors
-error_x = response_x - target_x;
-error_y = response_y - target_y;
-error_euclid = sqrt(error_x.^2 + error_y.^2);
 error_rho = response_rho - target_rho;
 error_theta = response_theta - target_theta;
 
@@ -109,6 +122,23 @@ for isubj = 1:nSubj
 %         savefig(gcf,['subj' num2str(subjnum) '_' titleVec{ipriority} ])
 %         savefig(gcf,['subj' num2str(subjnum) '_' titleVec{ipriority} '.png' ])
     end
+end
+
+%% plot of distribution of error and disc size with priority
+nBins = 25;
+
+colorVec = {'k','b','r'};
+figure; hold on;
+centers = linspace(0,13,nBins);
+for ipriority = 1:nPriorities;
+    priority = priorityVec(ipriority);
+    
+    idx = data_priority == priority; 
+    [counts] = hist(error_euclid(idx),centers);
+    counts = counts./sum(counts);
+    
+    plot(centers,counts,colorVec{ipriority})
+    
 end
 
 
