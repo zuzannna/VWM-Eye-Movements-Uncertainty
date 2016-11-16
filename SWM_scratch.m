@@ -125,22 +125,23 @@ for isubj = 1:nSubj
 end
 
 %% plot of distribution of error and disc size with priority
-nBins = 25;
+nBins = 13;
 
 colorVec = {'k','b','r'};
 figure; hold on;
-centers = linspace(0,13,nBins);
+centers = linspace(0,12,nBins);
 for ipriority = 1:nPriorities;
     priority = priorityVec(ipriority);
     
     idx = data_priority == priority; 
-    [counts] = hist(error_euclid(idx),centers);
+    %     [counts] = hist(error_euclid(idx),centers);
+    [counts] = hist(data_discsize(idx),centers);
     counts = counts./sum(counts);
     
     plot(centers,counts,colorVec{ipriority})
     
 end
-
+defaultplot
 
 %% main effects of error and disc size from priority
 
