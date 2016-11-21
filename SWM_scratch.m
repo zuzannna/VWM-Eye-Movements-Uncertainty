@@ -125,7 +125,7 @@ for isubj = 1:nSubj
 end
 
 %% plot of distribution of error and disc size with priority
-nBins = 15;
+nBins = 25;
 
 % z-score subject data
 standardized_discsize = nan(size(data_discsize));
@@ -149,13 +149,13 @@ end
 
 colorVec = {'k','b','r'};
 figure; hold on;
-% centers = linspace(0,12,nBins);
+centers = linspace(-4,12,nBins);
 for ipriority = 1:nPriorities;
     priority = priorityVec(ipriority);
     
     idx = data_priority == priority; 
-%         [counts,centers] = hist(standardized_error(idx),nBins);
-    [counts,centers] = hist(standardized_discsize(idx),nBins);
+        [counts,centers] = hist(standardized_error(idx),centers);
+%     [counts,centers] = hist(standardized_discsize(idx),centers);
     counts = counts./sum(counts);
     
     plot(centers,counts,colorVec{ipriority})
