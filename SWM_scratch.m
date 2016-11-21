@@ -125,17 +125,37 @@ for isubj = 1:nSubj
 end
 
 %% plot of distribution of error and disc size with priority
-nBins = 13;
+nBins = 15;
+
+% z-score subject data
+standardized_discsize = nan(size(data_discsize));
+standardized_error = nan(size(error_euclid));
+for isubj = 1:nSubj
+    subjnum = subjVec(isubj);
+    
+    idx = data_subj == subjnum;
+    
+    discsize = data_discsize(idx);
+    euclideanerror = error_euclid(idx);
+    
+    % standardize them
+    discsize = (discsize - mean(discsize))./std(discsize);
+    euclideanerror = (euclideanerror - mean(euclideanerror))./std(euclideanerror);
+    
+    % put them back
+    standardized_error(idx) = euclideanerror;
+    standardized_discsize(idx) = discsize;    
+end
 
 colorVec = {'k','b','r'};
 figure; hold on;
-centers = linspace(0,12,nBins);
+% centers = linspace(0,12,nBins);
 for ipriority = 1:nPriorities;
     priority = priorityVec(ipriority);
     
     idx = data_priority == priority; 
-    %     [counts] = hist(error_euclid(idx),centers);
-    [counts] = hist(data_discsize(idx),centers);
+%         [counts,centers] = hist(standardized_error(idx),nBins);
+    [counts,centers] = hist(standardized_discsize(idx),nBins);
     counts = counts./sum(counts);
     
     plot(centers,counts,colorVec{ipriority})
