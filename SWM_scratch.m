@@ -68,6 +68,7 @@ data_discsize(idx) = [];
 
 % priority and subject numbers
 priorityVec = unique(data_priority); % priority condition
+colorVec = {'k','b','r'};
 nPriorities = length(priorityVec);
 titleVec = {'low','med','high'};
 subjVec = unique(data_subj);
@@ -163,9 +164,34 @@ for ipriority = 1:nPriorities;
 end
 defaultplot
 
+%% scatterplot discsize error across subjects (standardized)
+
+
+figure; 
+for ipriority = 1:nPriorities % for each priority
+    priority = priorityVec(ipriority);
+    idx = data_priority == priority; % indices of trials for current subject
+   
+    curr_discsize = standardized_discsize(idx);
+    curr_error = standardized_error(idx);
+    
+    %     % not standardized
+    %     curr_discsize = data_discsize(idx);
+    %     curr_error = error_euclid(idx);
+    
+    plot(curr_discsize,curr_error,'o','Color',colorVec{ipriority})
+    hold on;
+end
+
+defaultplot
+xlabel('circle size')
+ylabel('saccade error')
+hold off;
+
+
 %% main effects of error and disc size from priority
 
-discsizeMat = nan(nSubj,nPriorities);
+discsizeMat = nan(nSubj,nPriorities); discsizevarMat = discsizeMat;
 euclideanerrorMat = discsizeMat;
 rhoerrorMat = discsizeMat; thetaerrorMat = discsizeMat;
 for isubj = 1:nSubj;
@@ -186,6 +212,7 @@ for isubj = 1:nSubj;
         
         % mean disc size
         discsizeMat(isubj,ipriority) = mean(data_discsize(idx));
+        discsizevarMat(isubj,ipriority) = var(data_discsize(idx));
     end
     
 end
@@ -296,7 +323,26 @@ end
 
 %% scatterplot of disc size vs error (euclidean or circular tangential)
 
-plot(data_discsize,error_euclid,'.')
+for isubj = 1:nSubj % for each subject
+    subjnum = subjVec(isubj);
+    
+    figure; hold on;
+    for ipriority = 1:nPriorities % for each priority
+        priority = priorityVec(ipriority);
+        idx = (data_subj == subjnum) & (data_priority == priority); % indices of trials for current subject
+        
+        curr_discsize = data_discsize(idx);
+        curr_error = error_euclid(idx);
+        
+        plot(curr_discsize,curr_error,'o','Color',colorVec{ipriority})
+        hold on;
+    end
+    
+    defaultplot
+    xlabel('circle size')
+    ylabel('saccade error')
+    hold off;
+end
 
 %% plot of variances for different priorities (with cov matrix)
 
