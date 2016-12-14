@@ -388,7 +388,31 @@ for ipriority = 1:nPriorities
     defaultplot
 end
 
-%% calculate correlation coefficient between euclidean error and discsize
+%% correlation coeff for each subject and priority
+
+rMat = nan(nSubj,nPriorities);
+pMat = nan(nSubj,nPriorities);
+for isubj = 1:nSubj
+    subjnum = subjVec(isubj);
+    
+    idx = data_subj == subjnum;
+    
+    for ipriority = 1:nPriorities
+        priority = priorityVec(ipriority);
+        
+        % get idx of subject and priority
+        idx2 = idx & (data_priority == priority);
+        
+        % calculate r and p and put into matrix
+        [r,p] = corrcoef(data_discsize(idx2),error_euclid(idx2));
+        
+        rMat(isubj,ipriority) = r(2);
+        pMat(isubj,ipriority) = p(2);
+        
+    end 
+end
+
+%% calculate correlation coefficient between euclidean error and discsize across subjects
 
 standardized_discsize = nan(size(data_discsize));
 standardized_error = nan(size(error_euclid));
